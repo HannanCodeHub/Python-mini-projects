@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "date": "2026-08-19",
+        "description": "food/meal",
+        "category": "Meal",
+        "amount": 20.0
+    },
+    {
+        "id": 2,
+        "date": "2026-08-19",
+        "description": "house rental system",
+        "category": "House Rent",
+        "amount": 20.0
+    },
+    {
+        "id": 3,
+        "date": "2026-08-19",
+        "description": "food quality",
+        "category": "Food Or Meal",
+        "amount": 10.0
+    }
+]
