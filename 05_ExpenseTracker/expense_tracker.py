@@ -1,89 +1,61 @@
 import json
-from datetime import date
-from pathlib import Path
+from datetime import datetime
 
-DATA_FILE = Path(__file__).with_name("expenses.json")
+FILE_NAME = "expenses.json"
 
 
 def load_expenses():
-    if not DATA_FILE.exists():
-        return []
-
     try:
-        with DATA_FILE.open("r", encoding="utf-8") as file:
-            expenses = json.load(file)
-            return expenses if isinstance(expenses, list) else []
-    except (json.JSONDecodeError, OSError):
-        print("Could not read saved expenses. Starting with an empty list.")
+        with open(FILE_NAME, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
         return []
 
 
 def save_expenses(expenses):
-    with DATA_FILE.open("w", encoding="utf-8") as file:
+    with open(FILE_NAME, "w") as file:
         json.dump(expenses, file, indent=4)
 
 
-def get_amount():
-    while True:
-        try:
-            amount = float(input("Amount: $"))
-            if amount <= 0:
-                raise ValueError
-            return round(amount, 2)
-        except ValueError:
-            print("Enter a positive number, for example 12.50.")
-
-
 def add_expense(expenses):
-    description = input("Description: ").strip()
-    if not description:
-        print("Description cannot be empty.")
+    try:
+        amount = float(input("Enter amount: "))
+    except ValueError:
+        print("Invalid amount!")
         return
 
-    category = input("Category: ").strip().title() or "Other"
-    amount = get_amount()
+    category = input("Enter category: ").strip()
+    description = input("Enter description: ").strip()
+
     expense = {
-        "id": max((item["id"] for item in expenses), default=0) + 1,
-        "date": date.today().isoformat(),
-        "description": description,
-        "category": category,
+        "id": len(expenses) + 1,
         "amount": amount,
+        "category": category,
+        "description": description,
+        "date": datetime.now().strftime("%Y-%m-%d")
     }
+
     expenses.append(expense)
     save_expenses(expenses)
-    print("Expense added successfully.")
+
+    print("Expense added successfully!")
 
 
 def view_expenses(expenses):
     if not expenses:
-        print("No expenses recorded yet.")
+        print("No expenses found.")
         return
 
-    print("\nID  Date         Category        Description                 Amount")
-    print("-" * 70)
+    print("\n===== EXPENSES =====")
+
     for expense in expenses:
         print(
-            f'{expense["id"]:<3} {expense["date"]:<12} '
-            f'{expense["category"]:<15} {expense["description"][:27]:<27} '
-            f'${expense["amount"]:>8.2f}'
+            f"ID: {expense['id']} | "
+            f"Amount: {expense['amount']:.2f} | "
+            f"Category: {expense['category']} | "
+            f"Description: {expense['description']} | "
+            f"Date: {expense['date']}"
         )
-
-
-def show_summary(expenses):
-    if not expenses:
-        print("No expenses recorded yet.")
-        return
-
-    total = sum(expense["amount"] for expense in expenses)
-    by_category = {}
-    for expense in expenses:
-        category = expense["category"]
-        by_category[category] = by_category.get(category, 0) + expense["amount"]
-
-    print(f"\nTotal expenses: ${total:.2f}")
-    print("By category:")
-    for category, amount in sorted(by_category.items()):
-        print(f"- {category}: ${amount:.2f}")
 
 
 def delete_expense(expenses):
@@ -92,20 +64,48 @@ def delete_expense(expenses):
         return
 
     view_expenses(expenses)
+
     try:
-        expense_id = int(input("Enter the ID to delete: "))
+        expense_id = int(input("\nEnter expense ID to delete: "))
     except ValueError:
-        print("Enter a valid numeric ID.")
+        print("Invalid ID!")
         return
 
     for expense in expenses:
         if expense["id"] == expense_id:
             expenses.remove(expense)
             save_expenses(expenses)
-            print("Expense deleted successfully.")
+            print("Expense deleted successfully!")
             return
 
-    print("No expense found with that ID.")
+    print("Expense not found.")
+
+
+def show_total(expenses):
+    total = sum(expense["amount"] for expense in expenses)
+
+    print(f"\nTotal Expenses: {total:.2f}")
+
+
+def show_category_total(expenses):
+    if not expenses:
+        print("No expenses found.")
+        return
+
+    category_totals = {}
+
+    for expense in expenses:
+        category = expense["category"]
+
+        if category not in category_totals:
+            category_totals[category] = 0
+
+        category_totals[category] += expense["amount"]
+
+    print("\n===== CATEGORY TOTALS =====")
+
+    for category, total in category_totals.items():
+        print(f"{category}: {total:.2f}")
 
 
 def main():
@@ -113,26 +113,36 @@ def main():
 
     while True:
         print("\n===== EXPENSE TRACKER =====")
-        print("1. Add expense")
-        print("2. View expenses")
-        print("3. Show summary")
-        print("4. Delete expense")
-        print("5. Exit")
+        print("1. Add Expense")
+        print("2. View Expenses")
+        print("3. Delete Expense")
+        print("4. Show Total")
+        print("5. Category-wise Total")
+        print("6. Exit")
 
-        choice = input("Choose an option: ").strip()
+        choice = input("\nEnter your choice: ")
+
         if choice == "1":
             add_expense(expenses)
+
         elif choice == "2":
             view_expenses(expenses)
+
         elif choice == "3":
-            show_summary(expenses)
-        elif choice == "4":
             delete_expense(expenses)
+
+        elif choice == "4":
+            show_total(expenses)
+
         elif choice == "5":
+            show_category_total(expenses)
+
+        elif choice == "6":
             print("Goodbye!")
             break
+
         else:
-            print("Choose an option from 1 to 5.")
+            print("Invalid choice!")
 
 
 if __name__ == "__main__":
